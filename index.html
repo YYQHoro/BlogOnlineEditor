@@ -2,59 +2,45 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>YYQ博客在线编辑器</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vditor/dist/index.css"/>
     <script src="https://cdn.jsdelivr.net/npm/vditor/dist/index.min.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+    <style>
+@media (min-width: 1460px) {
+    .container {
+        width: 1460px
+    }
+}
+    </style>
 </head>
 <body>
 <nav class="navbar navbar-default" role="navigation">
     <div class="container-fluid">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse"
-                    data-target="#example-navbar-collapse">
-                <span class="sr-only">切换导航</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
             <a class="navbar-brand" href="#">YYQ博客在线编辑器</a>
-        </div>
-        <div class="collapse navbar-collapse" id="example-navbar-collapse">
-            <ul class="nav navbar-nav">
-                <li class="active"><a href="#">iOS</a></li>
-                <li><a href="#">SVN</a></li>
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                        Java <b class="caret"></b>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a href="#">jmeter</a></li>
-                        <li><a href="#">EJB</a></li>
-                        <li><a href="#">Jasper Report</a></li>
-                        <li class="divider"></li>
-                        <li><a href="#">分离的链接</a></li>
-                        <li class="divider"></li>
-                        <li><a href="#">另一个分离的链接</a></li>
-                    </ul>
-                </li>
-            </ul>
         </div>
     </div>
 </nav>
 <div id="app" class="container">
     <div class="row">
         <div class="col-md-2">
-            <button type="button" @click="getPosts">点击</button>
+            <button type="button" class="btn btn-default" @click="newPost">新博文</button>
         </div>
     </div>
+    <br/>
     <div class="row">
         <div class="col-md-2">
-            <ul class="nav nav-pills nav-stacked" v-for="post in posts" :key="post.title">
-                <li><a v-on:click="editPost(post.dirName)">{{post.title}}</a></li>
-            </ul>
+            <div class="list-group">
+                <a class="list-group-item" v-for="post in posts" :key="post.title" v-on:click="editPost(post.dirName)"
+                   v-bind:class="{ 'active' : editingPostDirName==post.dirName }"
+                >
+                    {{post.title}}
+                </a>
+            </div>
         </div>
         <div class="col-md-10">
             <div id="vditor"></div>
@@ -63,22 +49,43 @@
 </div>
 </body>
 <script>
-new Vue({
+var vue = new Vue({
   el: '#app',
   data: {
     contentEditor: '',
-    posts: []
+    posts: [],
+    editingPostDirName: ''
   },
   methods: {
-    editPost(title) {
-        axios.post('/api/post/startEdit/'+title)
+    savePost() {
+        if(!this.editingPostDirName){return}
+        console.log(this.contentEditor.getValue())
+        axios.post('/api/post/endEdit/'+this.editingPostDirName, this.contentEditor.getValue())
+          .then(response => console.log(response.data))
+          .catch(function (error) {
+            console.log(error);
+          });
+    },
+    editPost(dirName) {
+        this.editingPostDirName=dirName;
+        axios.post('/api/post/startEdit/'+dirName)
           .then(response => this.contentEditor.setValue(response.data))
           .catch(function (error) {
             console.log(error);
           });
     },
-    getPosts () {
-     axios.get('/api/posts')
+    newPost() {
+        axios.post('/api/post/create')
+          .then(async response => {
+            await this.getPosts();
+            this.editPost(response.data.dirName);
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+    },
+    async getPosts () {
+     await axios.get('/api/posts')
           .then(response => this.posts=response.data)
           .catch(function (error) {
             console.log(error);
@@ -95,12 +102,14 @@ new Vue({
         enable: false,
       },
       after: () => {
-        this.contentEditor.setValue('hello, Vditor + Vue!')
       },
       upload:{
         url: "/upload",
         fieldName: "files",
         max: 20 * 1024 * 1024
+      },
+      blur: function(){
+        vue.savePost()
       }
     }),
     this.$nextTick(function(){
@@ -108,22 +117,6 @@ new Vue({
     })
   },
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 </script>

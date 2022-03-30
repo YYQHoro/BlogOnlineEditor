@@ -1,4 +1,5 @@
 import datetime
+import html.parser
 import os.path
 import shutil
 import subprocess
@@ -19,14 +20,9 @@ current_post_dir_name = '20220330122938'
 current_post_path = os.path.join(POSTS_PATH, current_post_dir_name)
 
 
-# current_post_dir_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-
 @app.route('/<file_name>', methods=['GET'])
 def get_file(file_name):
-    try:
-        return make_response(flask.send_from_directory(current_post_path, file_name))
-    except Exception:
-        traceback.print_exc()
+    return make_response(flask.send_from_directory(current_post_path, file_name))
 
 
 def get_md_yaml(file_path):
@@ -53,7 +49,8 @@ def get_posts():
         yaml = get_md_yaml(os.path.join(POSTS_PATH, i, 'index.md'))
         posts[i] = {
             'dirName': i,
-            'title': yaml['title'] if yaml else i
+            'title': yaml['title'] if yaml else i,
+            'isEditing': False
         }
     return make_response(jsonify(posts))
 
@@ -62,6 +59,25 @@ def switch_edit_post(target):
     global current_post_path, current_post_dir_name
     current_post_path = os.path.join(POSTS_PATH, target)
     current_post_dir_name = target
+
+
+def read_post_template():
+    with open(os.path.join(BLOG_CACHE_PATH, 'archetypes', 'posts.md'), mode='r', encoding='utf-8') as f:
+        return f.read()
+
+
+@app.route('/api/post/create', methods=['POST'])
+def create_post():
+    now = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=+8)))
+    post_dir_name = now.strftime('%Y%m%d%H%M%S')
+    os.mkdir(os.path.join(POSTS_PATH, post_dir_name))
+    template = read_post_template()
+    template = template.replace('{{title}}', post_dir_name)
+    template = template.replace('{{date}}', now.isoformat())
+    template = template.replace('{{categories}}', '[]')
+    with open(os.path.join(POSTS_PATH, post_dir_name, 'index.md'), mode='w', encoding='utf-8') as f:
+        f.write(template)
+    return make_response(jsonify({'dirName': post_dir_name}))
 
 
 @app.route('/api/post/startEdit/<filename>', methods=['POST'])
@@ -73,12 +89,18 @@ def start_edit_post(filename):
     return flask.Response(status=404)
 
 
+@app.route('/api/post/endEdit/<filename>', methods=['POST'])
+def end_edit_post(filename):
+    post = request.stream.read().decode('utf-8')
+    post=html.unescape(post)
+    with open(os.path.join(POSTS_PATH, filename, 'index.md'), mode='w', encoding='utf-8') as f:
+        f.write(post)
+    return flask.Response(status=200)
+
+
 @app.route('/', methods=['GET'])
 def home():
-    try:
-        return make_response(flask.send_file("index.html"))
-    except Exception:
-        traceback.print_exc()
+    return make_response(flask.send_file("index.html"))
 
 
 @app.route('/favicon.ico', methods=['GET'])
