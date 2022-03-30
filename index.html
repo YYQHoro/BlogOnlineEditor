@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vditor/dist/index.css"/>
     <script src="https://cdn.jsdelivr.net/npm/vditor/dist/index.min.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
 </head>
 <body>
 <nav class="navbar navbar-default" role="navigation">
@@ -44,7 +45,21 @@
     </div>
 </nav>
 <div id="app" class="container">
-    <div id="vditor"></div>
+    <div class="row">
+        <div class="col-md-2">
+            <button type="button" @click="getPosts">点击</button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-2">
+            <ul class="nav nav-pills nav-stacked" v-for="post in posts" :key="post.title">
+                <li><a v-on:click="editPost(post.dirName)">{{post.title}}</a></li>
+            </ul>
+        </div>
+        <div class="col-md-10">
+            <div id="vditor"></div>
+        </div>
+    </div>
 </div>
 </body>
 <script>
@@ -52,10 +67,27 @@ new Vue({
   el: '#app',
   data: {
     contentEditor: '',
+    posts: []
+  },
+  methods: {
+    editPost(title) {
+        axios.post('/api/post/startEdit/'+title)
+          .then(response => this.contentEditor.setValue(response.data))
+          .catch(function (error) {
+            console.log(error);
+          });
+    },
+    getPosts () {
+     axios.get('/api/posts')
+          .then(response => this.posts=response.data)
+          .catch(function (error) {
+            console.log(error);
+          });
+    }
   },
   mounted () {
     this.contentEditor = new Vditor('vditor', {
-      height: 360,
+      height: 1000,
       toolbarConfig: {
         pin: true,
       },
@@ -66,13 +98,25 @@ new Vue({
         this.contentEditor.setValue('hello, Vditor + Vue!')
       },
       upload:{
-        url: "http://127.0.0.1:5000/upload",
+        url: "/upload",
         fieldName: "files",
         max: 20 * 1024 * 1024
       }
+    }),
+    this.$nextTick(function(){
+        this.getPosts()
     })
   },
 })
+
+
+
+
+
+
+
+
+
 
 
 

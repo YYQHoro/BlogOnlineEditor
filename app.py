@@ -6,6 +6,7 @@ import traceback
 import uuid
 
 import flask
+import yaml
 from flask import Flask, make_response, jsonify
 from flask import request
 
@@ -26,6 +27,50 @@ def get_file(file_name):
         return make_response(flask.send_from_directory(current_post_path, file_name))
     except Exception:
         traceback.print_exc()
+
+
+def get_md_yaml(file_path):
+    yaml_lines = []
+    if not os.path.isfile(file_path):
+        return {}
+    with open(file_path, mode='r', encoding='utf-8') as f:
+        start_flag = False
+        for line in f:
+            if start_flag and not line.startswith('---'):
+                yaml_lines.append(line)
+            if line.startswith('---'):
+                if start_flag:
+                    break
+                else:
+                    start_flag = True
+    return yaml.load('\n'.join(yaml_lines))
+
+
+@app.route('/api/posts', methods=['GET'])
+def get_posts():
+    posts = {}
+    for i in os.listdir(POSTS_PATH):
+        yaml = get_md_yaml(os.path.join(POSTS_PATH, i, 'index.md'))
+        posts[i] = {
+            'dirName': i,
+            'title': yaml['title'] if yaml else i
+        }
+    return make_response(jsonify(posts))
+
+
+def switch_edit_post(target):
+    global current_post_path, current_post_dir_name
+    current_post_path = os.path.join(POSTS_PATH, target)
+    current_post_dir_name = target
+
+
+@app.route('/api/post/startEdit/<filename>', methods=['POST'])
+def start_edit_post(filename):
+    md_path = os.path.join(POSTS_PATH, filename, 'index.md')
+    if os.path.isfile(md_path):
+        switch_edit_post(filename)
+        return make_response(flask.send_file(md_path))
+    return flask.Response(status=404)
 
 
 @app.route('/', methods=['GET'])
