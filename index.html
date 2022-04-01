@@ -27,6 +27,7 @@
   opacity: 0;
 }
 
+
     </style>
 </head>
 <body>
@@ -48,7 +49,7 @@
     </div>
     <br/>
     <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-3">
             <div class="list-group">
                 <a class="list-group-item" v-for="post in posts" :key="post.title" v-on:click="editPost(post.dirName)"
                    v-bind:class="{ 'active' : editingPostDirName==post.dirName }"
@@ -58,7 +59,7 @@
                 </a>
             </div>
         </div>
-        <div class="col-md-10">
+        <div class="col-md-9">
             <div id="vditor"></div>
         </div>
 
@@ -108,14 +109,14 @@ var vue = new Vue({
             this.getPosts()
           })
           .catch(function (error) {
-            console.log(error);
+            errorHandler(error)
           });
     },
     showChanges() {
         axios.get('/api/posts/changes')
           .then(response => {this.changes=response.data;this.is_show_changes=true})
           .catch(function (error) {
-            console.log(error);
+            errorHandler(error)
           });
     },
     async savePost() {
@@ -123,7 +124,7 @@ var vue = new Vue({
         await axios.post('/api/post/'+this.editingPostDirName, this.contentEditor.getValue())
           .then(response => {})
           .catch(function (error) {
-            console.log(error);
+            errorHandler(error)
           });
     },
     async editPost(dirName) {
@@ -133,17 +134,19 @@ var vue = new Vue({
         axios.get('/api/post/'+dirName)
           .then(response => this.createEditor(dirName, response.data))
           .catch(function (error) {
-            console.log(error);
+            errorHandler(error)
           });
     },
     reset() {
-        axios.post('/api/reset')
-          .then(async response => {
-            await this.getPosts();
-          })
-          .catch(function (error) {
-            console.log(error);
-          });
+		if (confirm("是否确定执行重置操作？") == true) {
+             axios.post('/api/reset')
+              .then(async response => {
+                await this.getPosts();
+              })
+              .catch(function (error) {
+                errorHandler(error)
+              });
+        }
     },
     newPost() {
         axios.post('/api/post/create')
@@ -152,14 +155,14 @@ var vue = new Vue({
             this.editPost(response.data.dirName);
           })
           .catch(function (error) {
-            console.log(error);
+            errorHandler(error)
           });
     },
     async getPosts () {
      await axios.get('/api/posts')
           .then(response => this.posts=response.data)
           .catch(function (error) {
-            console.log(error);
+            errorHandler(error)
           });
     },
     createEditor(dirName,rawMd){
@@ -200,10 +203,8 @@ var vue = new Vue({
   },
 })
 
-
-
-
-
-
+function errorHandler(error) {
+    alert(error)
+}
 </script>
 </html>
