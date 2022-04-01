@@ -18,9 +18,6 @@ BLOG_CACHE_PATH = 'blog_cache'
 BLOG_GIT_SSH = 'git@gitee.com:RainbowYYQ/my-blog.git'
 POSTS_PATH = os.path.join(BLOG_CACHE_PATH, 'content', 'posts')
 
-current_post_dir_name = ''
-current_post_path = os.path.join(POSTS_PATH, current_post_dir_name)
-
 STATIC_FILES = {}
 
 
@@ -95,10 +92,10 @@ def git_status():
 def get_posts():
     posts = {}
     for i in os.listdir(POSTS_PATH):
-        yaml = get_md_yaml(os.path.join(POSTS_PATH, i, 'index.md'))
+        post_yaml = get_md_yaml(os.path.join(POSTS_PATH, i, 'index.md'))
         posts[i] = {
             'dirName': i,
-            'title': yaml['title'] if yaml else i
+            'title': post_yaml['title'] if yaml else i
         }
     return make_response(jsonify(posts))
 
