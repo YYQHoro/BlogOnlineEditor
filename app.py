@@ -153,7 +153,10 @@ def upload_files():
         try:
             suffix = os.path.splitext(file.filename)[1]
             new_filename = f"{str(uuid.uuid4()).replace('-', '')}{suffix}"
-            file.save(os.path.join(current_post_path, new_filename))
+            dir_name = request.form.get('belongDirName')
+            if not dir_name:
+                raise Exception('belongDirName is empty')
+            file.save(os.path.join(POSTS_PATH, dir_name, new_filename))
             success_files[file.filename] = f'{new_filename}'
         except Exception:
             traceback.print_exc()

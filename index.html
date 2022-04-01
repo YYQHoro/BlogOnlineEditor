@@ -158,7 +158,10 @@ var vue = new Vue({
           upload:{
             url: "/upload",
             fieldName: "files",
-            max: 20 * 1024 * 1024
+            max: 20 * 1024 * 1024,
+            extraData: {
+                belongDirName: dirName
+            }
           },
           blur: function(){
             vue.savePost()
