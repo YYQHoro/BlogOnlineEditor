@@ -16,7 +16,8 @@ app = Flask(__name__)
 BLOG_CACHE_PATH = os.getenv('BLOG_CACHE_PATH', 'blog_cache')
 BLOG_GIT_SSH = os.getenv('BLOG_GIT_SSH', 'git@gitee.com:RainbowYYQ/my-blog.git')
 POSTS_PATH = os.getenv('POSTS_PATH', os.path.join(BLOG_CACHE_PATH, 'content', 'posts'))
-
+BLOG_BRANCH = os.getenv('BLOG_BRANCH', 'master')
+NEW_BLOG_TEMPLATE_PATH = os.getenv('NEW_BLOG_TEMPLATE_PATH', os.path.join(BLOG_CACHE_PATH, 'archetypes', 'posts.md'))
 STATIC_FILES = {}
 
 
@@ -158,7 +159,7 @@ def delete_post(filename):
     return flask.Response(status=200)
 
 
-@app.route('/api/post/save/<filename>', methods=['POST'])
+@app.route('/api/post/<filename>', methods=['POST'])
 def save_post(filename):
     post = html.unescape(request.stream.read().decode('utf-8'))
     if not os.path.exists(os.path.join(POSTS_PATH, filename)):
@@ -215,7 +216,7 @@ def git_add():
 def init_git():
     shutil.rmtree(BLOG_CACHE_PATH, ignore_errors=True)
     os.mkdir(BLOG_CACHE_PATH)
-    subprocess.run(f'git clone {BLOG_GIT_SSH} -b master {BLOG_CACHE_PATH}')
+    subprocess.run(f'git clone {BLOG_GIT_SSH} -b {BLOG_BRANCH} {BLOG_CACHE_PATH}')
     cache_static_files()
 
 

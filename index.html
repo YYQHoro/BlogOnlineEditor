@@ -118,7 +118,7 @@ var vue = new Vue({
     },
     async savePost() {
         if(!this.editingPostDirName){return}
-        await axios.post('/api/post/save/'+this.editingPostDirName, this.contentEditor.getValue())
+        await axios.post('/api/post/'+this.editingPostDirName, this.contentEditor.getValue())
           .then(response => {})
           .catch(function (error) {
             console.log(error);
@@ -158,12 +158,7 @@ var vue = new Vue({
             pin: true,
           },
           cache: {
-            enable: true,
-            id: "posts-"+dirName,
-            after: () => {
-                // 当输入完后大约2秒后，保存当前文章到本地缓存和服务端
-                this.savePost()
-            },
+            enable: false
           },
           after: () => {
             this.contentEditor.setValue(rawMd);
@@ -177,6 +172,10 @@ var vue = new Vue({
             }
           },
           blur: function(){
+            // vue.savePost()
+          },
+          input: () => {
+            // 当输入完后大约2秒后，保存当前文章到本地缓存和服务端
             vue.savePost()
           }
         });
