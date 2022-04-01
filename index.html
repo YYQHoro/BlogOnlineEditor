@@ -15,6 +15,18 @@
         width: 1460px
     }
 }
+.modal {
+  display: block;
+}
+
+/* 如果不使用vue的transition的话可以不设置 */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .15s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
+
     </style>
 </head>
 <body>
@@ -29,6 +41,7 @@
     <div class="row">
         <div class="col-md-2">
             <button type="button" class="btn btn-default" @click="newPost">新博文</button>
+            <button type="button" class="btn btn-default" @click="showChanges">提交</button>
         </div>
     </div>
     <br/>
@@ -45,8 +58,32 @@
         <div class="col-md-10">
             <div id="vditor"></div>
         </div>
+
+        <div v-if="is_show_changes">
+            <div class="modal" v-on:click.self="show_changes=false">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" v-on:click="is_show_changes=false">&times;</button>
+                            <h4 class="modal-title">当前所有改动</h4>
+                        </div>
+                        <div class="modal-body">
+                            <ul>
+                                <li v-for="change in changes">{{change}}</li>
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" v-on:click="is_show_changes=false">关闭</button>
+                            <button type="button" class="btn btn-primary">提交变更</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+
 </body>
 <script>
 var vue = new Vue({
@@ -54,9 +91,18 @@ var vue = new Vue({
   data: {
     contentEditor: '',
     posts: [],
-    editingPostDirName: ''
+    editingPostDirName: '',
+    is_show_changes: false,
+    changes:[]
   },
   methods: {
+    showChanges() {
+        axios.get('/api/posts/changes')
+          .then(response => {this.changes=response.data;this.is_show_changes=true})
+          .catch(function (error) {
+            console.log(error);
+          });
+    },
     savePost() {
         if(!this.editingPostDirName){return}
         console.log(this.contentEditor.getValue())
@@ -112,11 +158,13 @@ var vue = new Vue({
         vue.savePost()
       }
     }),
+    // 页面打开时刷新文章列表
     this.$nextTick(function(){
         this.getPosts()
     })
   },
 })
+
 
 
 </script>

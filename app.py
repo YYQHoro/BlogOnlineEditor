@@ -1,10 +1,11 @@
 import datetime
 import html.parser
-import os.path
+import os
 import shutil
 import subprocess
 import traceback
 import uuid
+from typing import List
 
 import flask
 import yaml
@@ -16,12 +17,14 @@ BLOG_CACHE_PATH = 'blog_cache'
 BLOG_GIT_SSH = 'git@gitee.com:RainbowYYQ/my-blog.git'
 POSTS_PATH = os.path.join(BLOG_CACHE_PATH, 'content', 'posts')
 
-current_post_dir_name = '20220330122938'
+current_post_dir_name = ''
 current_post_path = os.path.join(POSTS_PATH, current_post_dir_name)
 
 
 @app.route('/<file_name>', methods=['GET'])
 def get_file(file_name):
+    if not current_post_dir_name:
+        return flask.Response(status=404)
     return make_response(flask.send_from_directory(current_post_path, file_name))
 
 
@@ -42,6 +45,35 @@ def get_md_yaml(file_path):
     return yaml.load('\n'.join(yaml_lines))
 
 
+@app.route('/api/posts/changes', methods=['GET'])
+def get_post_changes():
+    git_add()
+    status_result_for_show = pretty_git_status(git_status())
+    return make_response(jsonify(status_result_for_show))
+
+
+def pretty_git_status(status_result):
+    def _get_title(filepath):
+        return get_md_yaml(os.path.join(BLOG_CACHE_PATH, filepath)).get('title') if status.endswith(
+            "index.md") else ''
+
+    status_result_for_show = []
+    for status in status_result:
+        flag, filepath = status.split()
+        if status.startswith("M "):
+            status_result_for_show.append("修改 " + filepath + " " + _get_title(filepath))
+        elif status.startswith("A "):
+            status_result_for_show.append("新增 " + filepath + " " + _get_title(filepath))
+        else:
+            status_result_for_show.append(status)
+    return status_result_for_show
+
+
+def git_status():
+    output = subprocess.run(f'git status -s', cwd=BLOG_CACHE_PATH, capture_output=True, check=True)
+    return [line.strip() for line in output.stdout.decode('utf-8').splitlines()]
+
+
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
     posts = {}
@@ -49,8 +81,7 @@ def get_posts():
         yaml = get_md_yaml(os.path.join(POSTS_PATH, i, 'index.md'))
         posts[i] = {
             'dirName': i,
-            'title': yaml['title'] if yaml else i,
-            'isEditing': False
+            'title': yaml['title'] if yaml else i
         }
     return make_response(jsonify(posts))
 
@@ -91,8 +122,7 @@ def start_edit_post(filename):
 
 @app.route('/api/post/endEdit/<filename>', methods=['POST'])
 def end_edit_post(filename):
-    post = request.stream.read().decode('utf-8')
-    post=html.unescape(post)
+    post = html.unescape(request.stream.read().decode('utf-8'))
     with open(os.path.join(POSTS_PATH, filename, 'index.md'), mode='w', encoding='utf-8') as f:
         f.write(post)
     return flask.Response(status=200)
@@ -121,6 +151,7 @@ def upload_files():
         except Exception:
             traceback.print_exc()
             failed_files.append(file.filename)
+    git_add()
     ret_dict = {
         "msg": "",
         "code": 0,
@@ -134,6 +165,10 @@ def upload_files():
     return response
 
 
+def git_add():
+    subprocess.run(f'git add -A', cwd=BLOG_CACHE_PATH, capture_output=True, check=True)
+
+
 def init_git():
     shutil.rmtree(BLOG_CACHE_PATH, ignore_errors=True)
     os.mkdir(BLOG_CACHE_PATH)
@@ -142,4 +177,5 @@ def init_git():
 
 if __name__ == '__main__':
     # init_git()
+
     app.run()
