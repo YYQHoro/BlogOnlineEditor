@@ -5,7 +5,6 @@ import shutil
 import subprocess
 import traceback
 import uuid
-from typing import List
 
 import flask
 import yaml
@@ -13,6 +12,8 @@ from flask import Flask, make_response, jsonify
 from flask import request
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.urandom(24)
+
 BLOG_CACHE_PATH = 'blog_cache'
 BLOG_GIT_SSH = 'git@gitee.com:RainbowYYQ/my-blog.git'
 POSTS_PATH = os.path.join(BLOG_CACHE_PATH, 'content', 'posts')
@@ -20,12 +21,28 @@ POSTS_PATH = os.path.join(BLOG_CACHE_PATH, 'content', 'posts')
 current_post_dir_name = ''
 current_post_path = os.path.join(POSTS_PATH, current_post_dir_name)
 
+STATIC_FILES = {}
+
+
+def cache_static_files():
+    global STATIC_FILES
+    STATIC_FILES.clear()
+    for root, dirs, files in os.walk(POSTS_PATH, topdown=False):
+        for name in files:
+            if name == 'index.md':
+                continue
+            if name in STATIC_FILES:
+                raise Exception('static file ' + name + " duplicated!")
+            STATIC_FILES[name] = root
+    print(STATIC_FILES)
+
 
 @app.route('/<file_name>', methods=['GET'])
 def get_file(file_name):
-    if not current_post_dir_name:
+    if file_name in STATIC_FILES:
+        return make_response(flask.send_from_directory(STATIC_FILES[file_name], file_name))
+    else:
         return flask.Response(status=404)
-    return make_response(flask.send_from_directory(current_post_path, file_name))
 
 
 def get_md_yaml(file_path):
@@ -42,7 +59,7 @@ def get_md_yaml(file_path):
                     break
                 else:
                     start_flag = True
-    return yaml.load('\n'.join(yaml_lines))
+    return yaml.load('\n'.join(yaml_lines), Loader=yaml.BaseLoader)
 
 
 @app.route('/api/posts/changes', methods=['GET'])
@@ -86,12 +103,6 @@ def get_posts():
     return make_response(jsonify(posts))
 
 
-def switch_edit_post(target):
-    global current_post_path, current_post_dir_name
-    current_post_path = os.path.join(POSTS_PATH, target)
-    current_post_dir_name = target
-
-
 def read_post_template():
     with open(os.path.join(BLOG_CACHE_PATH, 'archetypes', 'posts.md'), mode='r', encoding='utf-8') as f:
         return f.read()
@@ -111,17 +122,16 @@ def create_post():
     return make_response(jsonify({'dirName': post_dir_name}))
 
 
-@app.route('/api/post/startEdit/<filename>', methods=['POST'])
-def start_edit_post(filename):
+@app.route('/api/post/<filename>', methods=['GET'])
+def get_post(filename):
     md_path = os.path.join(POSTS_PATH, filename, 'index.md')
     if os.path.isfile(md_path):
-        switch_edit_post(filename)
         return make_response(flask.send_file(md_path))
     return flask.Response(status=404)
 
 
-@app.route('/api/post/endEdit/<filename>', methods=['POST'])
-def end_edit_post(filename):
+@app.route('/api/post/save/<filename>', methods=['POST'])
+def save_post(filename):
     post = html.unescape(request.stream.read().decode('utf-8'))
     with open(os.path.join(POSTS_PATH, filename, 'index.md'), mode='w', encoding='utf-8') as f:
         f.write(post)
@@ -152,6 +162,7 @@ def upload_files():
             traceback.print_exc()
             failed_files.append(file.filename)
     git_add()
+    cache_static_files()
     ret_dict = {
         "msg": "",
         "code": 0,
@@ -161,7 +172,6 @@ def upload_files():
         }
     }
     response = make_response(jsonify(ret_dict))
-    response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
 
@@ -173,9 +183,10 @@ def init_git():
     shutil.rmtree(BLOG_CACHE_PATH, ignore_errors=True)
     os.mkdir(BLOG_CACHE_PATH)
     subprocess.run(f'git clone {BLOG_GIT_SSH} -b master {BLOG_CACHE_PATH}')
+    cache_static_files()
 
 
 if __name__ == '__main__':
     # init_git()
-
+    cache_static_files()
     app.run()

@@ -103,19 +103,20 @@ var vue = new Vue({
             console.log(error);
           });
     },
-    savePost() {
+    async savePost() {
         if(!this.editingPostDirName){return}
-        console.log(this.contentEditor.getValue())
-        axios.post('/api/post/endEdit/'+this.editingPostDirName, this.contentEditor.getValue())
-          .then(response => console.log(response.data))
+        await axios.post('/api/post/save/'+this.editingPostDirName, this.contentEditor.getValue())
+          .then(response => {})
           .catch(function (error) {
             console.log(error);
           });
     },
-    editPost(dirName) {
+    async editPost(dirName) {
+        // 切换前先保存当前正在编辑的内容
+        await this.savePost();
         this.editingPostDirName=dirName;
-        axios.post('/api/post/startEdit/'+dirName)
-          .then(response => this.contentEditor.setValue(response.data))
+        axios.get('/api/post/'+dirName)
+          .then(response => this.createEditor(dirName, response.data))
           .catch(function (error) {
             console.log(error);
           });
@@ -136,28 +137,36 @@ var vue = new Vue({
           .catch(function (error) {
             console.log(error);
           });
+    },
+    createEditor(dirName,rawMd){
+        this.contentEditor = new Vditor('vditor', {
+          height: 1000,
+          toolbarConfig: {
+            pin: true,
+          },
+          cache: {
+            enable: true,
+            id: "posts-"+dirName,
+            after: () => {
+                // 当输入完后大约2秒后，保存当前文章到本地缓存和服务端
+                this.savePost()
+            },
+          },
+          after: () => {
+            this.contentEditor.setValue(rawMd);
+          },
+          upload:{
+            url: "/upload",
+            fieldName: "files",
+            max: 20 * 1024 * 1024
+          },
+          blur: function(){
+            vue.savePost()
+          }
+        });
     }
   },
   mounted () {
-    this.contentEditor = new Vditor('vditor', {
-      height: 1000,
-      toolbarConfig: {
-        pin: true,
-      },
-      cache: {
-        enable: false,
-      },
-      after: () => {
-      },
-      upload:{
-        url: "/upload",
-        fieldName: "files",
-        max: 20 * 1024 * 1024
-      },
-      blur: function(){
-        vue.savePost()
-      }
-    }),
     // 页面打开时刷新文章列表
     this.$nextTick(function(){
         this.getPosts()
