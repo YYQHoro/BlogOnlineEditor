@@ -20,6 +20,8 @@ BLOG_BRANCH = os.getenv('BLOG_BRANCH', 'master')
 NEW_BLOG_TEMPLATE_PATH = os.getenv('NEW_BLOG_TEMPLATE_PATH', os.path.join(BLOG_CACHE_PATH, 'archetypes', 'posts.md'))
 STATIC_FILES = {}
 
+IS_INIT_WORKSPACE = False
+
 
 def delete_image_not_included(specific_post=None):
     # 删除已经上传但是文章里没引用到的图片
@@ -98,9 +100,9 @@ def pretty_git_status(status_result):
     for status in status_result:
         flag, filepath = status.split()
         if status.startswith("M "):
-            status_result_for_show.append("修改 " + filepath + " " + _get_title(filepath))
+            status_result_for_show.append("修改 " + _get_title(filepath) + " " + filepath)
         elif status.startswith("A "):
-            status_result_for_show.append("新增 " + filepath + " " + _get_title(filepath))
+            status_result_for_show.append("新增 " + _get_title(filepath) + " " + filepath)
         elif status.startswith("D "):
             status_result_for_show.append("删除 " + filepath)
         else:
@@ -179,6 +181,17 @@ def favicon():
     return flask.Response(status=404)
 
 
+@app.route('/api/reset', methods=['POST'])
+def reset():
+    check_initializing()
+    if os.path.exists(BLOG_CACHE_PATH):
+        backup_path = BLOG_CACHE_PATH + "_backup"
+        shutil.rmtree(backup_path, ignore_errors=True)
+        shutil.copytree(BLOG_CACHE_PATH, backup_path, dirs_exist_ok=True)
+    init_git()
+    return flask.Response(status=200)
+
+
 @app.route('/upload', methods=['POST', 'OPTIONS'])
 def upload_files():
     success_files = {}
@@ -214,13 +227,27 @@ def git_add():
 
 
 def init_git():
-    shutil.rmtree(BLOG_CACHE_PATH, ignore_errors=True)
-    os.mkdir(BLOG_CACHE_PATH)
-    subprocess.run(f'git clone {BLOG_GIT_SSH} -b {BLOG_BRANCH} {BLOG_CACHE_PATH}')
-    cache_static_files()
+    global IS_INIT_WORKSPACE
+    if IS_INIT_WORKSPACE:
+        return
+    IS_INIT_WORKSPACE = True
+    try:
+        if os.path.exists(BLOG_CACHE_PATH):
+            shutil.rmtree(BLOG_CACHE_PATH, ignore_errors=False)
+        os.makedirs(BLOG_CACHE_PATH, exist_ok=True)
+        subprocess.run(f'git clone {BLOG_GIT_SSH} -b {BLOG_BRANCH} {BLOG_CACHE_PATH}')
+        cache_static_files()
+    finally:
+        IS_INIT_WORKSPACE = False
+
+
+def check_initializing():
+    if IS_INIT_WORKSPACE:
+        raise Exception('workspace is in initializing')
 
 
 if __name__ == '__main__':
-    # init_git()
+    if not os.path.exists(BLOG_CACHE_PATH):
+        init_git()
     cache_static_files()
     app.run()
