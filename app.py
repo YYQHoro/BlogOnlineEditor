@@ -20,6 +20,29 @@ POSTS_PATH = os.getenv('POSTS_PATH', os.path.join(BLOG_CACHE_PATH, 'content', 'p
 STATIC_FILES = {}
 
 
+def delete_image_not_included(specific_post=None):
+    # 删除已经上传但是文章里没引用到的图片
+    def scan_post(dir_name):
+        cur_post_content = ""
+        md_file = os.path.join(POSTS_PATH, dir_name, 'index.md')
+        if os.path.isfile(md_file):
+            with open(md_file, mode='r', encoding='utf-8') as f:
+                cur_post_content = f.read()
+        for file in os.listdir(os.path.join(POSTS_PATH, dir_name)):
+            if file == 'index.md':
+                continue
+            if file not in cur_post_content:
+                delete_file_path = os.path.join(POSTS_PATH, dir_name, file)
+                app.logger.info('file not used %s delete it.', delete_file_path)
+                os.remove(delete_file_path)
+
+    if specific_post:
+        scan_post(specific_post)
+    else:
+        for dir_name in os.listdir(POSTS_PATH):
+            scan_post(dir_name)
+
+
 def cache_static_files():
     global STATIC_FILES
     STATIC_FILES.clear()
@@ -28,9 +51,8 @@ def cache_static_files():
             if name == 'index.md':
                 continue
             if name in STATIC_FILES:
-                raise Exception('static file ' + name + " duplicated!")
+                raise Exception('static file ' + name + " duplicated: " + root + " " + STATIC_FILES[name])
             STATIC_FILES[name] = root
-    print(STATIC_FILES)
 
 
 @app.route('/<file_name>', methods=['GET'])
@@ -60,6 +82,7 @@ def get_md_yaml(file_path):
 
 @app.route('/api/posts/changes', methods=['GET'])
 def get_post_changes():
+    delete_image_not_included()
     git_add()
     status_result_for_show = pretty_git_status(git_status())
     return make_response(jsonify(status_result_for_show))
