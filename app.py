@@ -192,6 +192,12 @@ def reset():
     return flask.Response(status=200)
 
 
+@app.route('/api/commit', methods=['POST'])
+def commit():
+    git_commit()
+    return flask.Response(status=200)
+
+
 @app.route('/upload', methods=['POST', 'OPTIONS'])
 def upload_files():
     success_files = {}
@@ -224,6 +230,10 @@ def upload_files():
 
 def git_add():
     subprocess.run(f'git add -A', cwd=BLOG_CACHE_PATH, capture_output=True, check=True)
+
+
+def git_commit():
+    subprocess.run(f'git commit -m "online editor auto update"', cwd=BLOG_CACHE_PATH, capture_output=True, check=True)
 
 
 def init_git():

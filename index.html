@@ -78,7 +78,7 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-default" v-on:click="is_show_changes=false">关闭</button>
-                            <button type="button" class="btn btn-primary">提交变更</button>
+                            <button type="button" class="btn btn-primary" @click="commit">提交变更</button>
                         </div>
                     </div>
                 </div>
@@ -100,6 +100,15 @@ var vue = new Vue({
     changes:[]
   },
   methods: {
+    async commit() {
+        await axios.post('/api/commit')
+          .then(response => {
+            this.is_show_changes=false
+          })
+          .catch(function (error) {
+            errorHandler(error)
+          });
+    },
     deletePost(dirName) {
         if(this.editingPostDirName==dirName){
             this.contentEditor.disabled()
