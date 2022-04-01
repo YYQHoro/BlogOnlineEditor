@@ -52,6 +52,7 @@
                    v-bind:class="{ 'active' : editingPostDirName==post.dirName }"
                 >
                     {{post.title}}
+                    <button type="button" class="close" v-on:click="deletePost(post.dirName)">&times;</button>
                 </a>
             </div>
         </div>
@@ -96,6 +97,18 @@ var vue = new Vue({
     changes:[]
   },
   methods: {
+    deletePost(dirName) {
+        if(this.editingPostDirName==dirName){
+            this.contentEditor.disabled()
+        }
+        axios.delete('/api/post/'+dirName)
+          .then(response => {
+            this.getPosts()
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+    },
     showChanges() {
         axios.get('/api/posts/changes')
           .then(response => {this.changes=response.data;this.is_show_changes=true})

@@ -12,11 +12,10 @@ from flask import Flask, make_response, jsonify
 from flask import request
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(24)
 
-BLOG_CACHE_PATH = 'blog_cache'
-BLOG_GIT_SSH = 'git@gitee.com:RainbowYYQ/my-blog.git'
-POSTS_PATH = os.path.join(BLOG_CACHE_PATH, 'content', 'posts')
+BLOG_CACHE_PATH = os.getenv('BLOG_CACHE_PATH', 'blog_cache')
+BLOG_GIT_SSH = os.getenv('BLOG_GIT_SSH', 'git@gitee.com:RainbowYYQ/my-blog.git')
+POSTS_PATH = os.getenv('POSTS_PATH', os.path.join(BLOG_CACHE_PATH, 'content', 'posts'))
 
 STATIC_FILES = {}
 
@@ -78,6 +77,8 @@ def pretty_git_status(status_result):
             status_result_for_show.append("修改 " + filepath + " " + _get_title(filepath))
         elif status.startswith("A "):
             status_result_for_show.append("新增 " + filepath + " " + _get_title(filepath))
+        elif status.startswith("D "):
+            status_result_for_show.append("删除 " + filepath)
         else:
             status_result_for_show.append(status)
     return status_result_for_show
@@ -127,9 +128,18 @@ def get_post(filename):
     return flask.Response(status=404)
 
 
+@app.route('/api/post/<filename>', methods=['DELETE'])
+def delete_post(filename):
+    shutil.rmtree(os.path.join(POSTS_PATH, filename), ignore_errors=True)
+    git_add()
+    return flask.Response(status=200)
+
+
 @app.route('/api/post/save/<filename>', methods=['POST'])
 def save_post(filename):
     post = html.unescape(request.stream.read().decode('utf-8'))
+    if not os.path.exists(os.path.join(POSTS_PATH, filename)):
+        return flask.Response(status=404)
     with open(os.path.join(POSTS_PATH, filename, 'index.md'), mode='w', encoding='utf-8') as f:
         f.write(post)
     return flask.Response(status=200)
