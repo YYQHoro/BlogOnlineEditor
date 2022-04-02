@@ -100,7 +100,7 @@ def get_post_changes():
     delete_image_not_included()
     git_add()
     status_result_for_show = pretty_git_status(git_status())
-    return make_response(jsonify(status_result_for_show))
+    return make_no_cache(make_response(jsonify(status_result_for_show)))
 
 
 def pretty_git_status(status_result):
@@ -131,7 +131,7 @@ def get_posts():
             'dirName': i,
             'title': post_yaml['title'] if yaml else i
         }
-    return make_response(jsonify(posts))
+    return make_no_cache(make_response(jsonify(posts)))
 
 
 def read_post_template():
@@ -158,7 +158,7 @@ def get_post(filename):
     check_name(filename)
     md_path = os.path.join(POSTS_PATH, filename, 'index.md')
     if os.path.isfile(md_path):
-        return make_response(flask.send_file(md_path))
+        return make_no_cache(make_response(flask.send_file(md_path)))
     return flask.Response(status=404)
 
 
@@ -274,8 +274,13 @@ def check_initializing():
         raise Exception('workspace is in initializing')
 
 
+def make_no_cache(response):
+    response.cache_control.no_cache = True
+    return response
+
+
 if __name__ == '__main__':
     if not os.path.exists(BLOG_CACHE_PATH):
         init_git()
     cache_static_files()
-    app.run()
+    app.run(host='127.0.0.1', port=5000)
