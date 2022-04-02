@@ -14,17 +14,19 @@ from flask import request
 
 app = Flask(__name__)
 
-app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', str(20 * 1024 * 1024)))
 BLOG_CACHE_PATH = os.getenv('BLOG_CACHE_PATH', 'blog_cache')
 BLOG_GIT_SSH = os.getenv('BLOG_GIT_SSH', 'git@gitee.com:RainbowYYQ/my-blog.git')
 POSTS_PATH = os.getenv('POSTS_PATH', os.path.join(BLOG_CACHE_PATH, 'content', 'posts'))
 BLOG_BRANCH = os.getenv('BLOG_BRANCH', 'master')
 CMD_AFTER_PUSH = os.getenv('CMD_AFTER_PUSH', '/home/yyq/update_blog.sh')
 NEW_BLOG_TEMPLATE_PATH = os.getenv('NEW_BLOG_TEMPLATE_PATH', os.path.join(BLOG_CACHE_PATH, 'archetypes', 'posts.md'))
+
+# 静态文件索引
 STATIC_FILES = {}
-
+# 防止并发初始化工作空间
 IS_INIT_WORKSPACE = False
-
+# 防止命令注入
 RULE = re.compile(r'[a-zA-Z0-9]+')
 
 
@@ -186,7 +188,7 @@ def home():
 
 @app.route('/favicon.ico', methods=['GET'])
 def favicon():
-    return flask.Response(status=404)
+    return make_response(flask.send_file("favicon.ico"))
 
 
 @app.route('/api/reset', methods=['POST'])
