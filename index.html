@@ -187,6 +187,11 @@ var vue = new Vue({
           after: () => {
             this.contentEditor.setValue(rawMd);
           },
+          preview: {
+           markdown: {
+            linkBase: dirName
+           }
+          },
           upload:{
             url: "/upload",
             fieldName: "files",

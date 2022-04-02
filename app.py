@@ -58,24 +58,10 @@ def delete_image_not_included(specific_post=None):
             scan_post(dir_name)
 
 
-def cache_static_files():
-    global STATIC_FILES
-    STATIC_FILES.clear()
-    for root, dirs, files in os.walk(POSTS_PATH, topdown=False):
-        for name in files:
-            if name == 'index.md':
-                continue
-            if name in STATIC_FILES:
-                raise Exception('static file ' + name + " duplicated: " + root + " " + STATIC_FILES[name])
-            STATIC_FILES[name] = root
-
-
-@app.route('/<file_name>', methods=['GET'])
-def get_file(file_name):
-    if file_name in STATIC_FILES:
-        return make_response(flask.send_from_directory(STATIC_FILES[file_name], file_name))
-    else:
-        return flask.Response(status=404)
+@app.route('/<dir_name>/<file_name>', methods=['GET'])
+def get_file(dir_name, file_name):
+    check_name(dir_name)
+    return make_response(flask.send_from_directory(os.path.join(POSTS_PATH, dir_name), file_name))
 
 
 def get_md_yaml(file_path):
@@ -227,7 +213,6 @@ def upload_files():
             traceback.print_exc()
             failed_files.append(file.filename)
     git_add()
-    cache_static_files()
     ret_dict = {
         "msg": "",
         "code": 0,
@@ -265,7 +250,6 @@ def init_git():
             shutil.rmtree(BLOG_CACHE_PATH, ignore_errors=False)
         os.makedirs(BLOG_CACHE_PATH, exist_ok=True)
         subprocess.run(['git', 'clone', BLOG_GIT_SSH, '-b', BLOG_BRANCH, BLOG_CACHE_PATH])
-        cache_static_files()
     finally:
         IS_INIT_WORKSPACE = False
 
@@ -278,5 +262,4 @@ def check_initializing():
 if __name__ == '__main__':
     if not os.path.exists(BLOG_CACHE_PATH):
         init_git()
-    cache_static_files()
     app.run()
