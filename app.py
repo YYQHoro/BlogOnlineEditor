@@ -110,11 +110,6 @@ def pretty_git_status(status_result):
     return status_result_for_show
 
 
-def git_status():
-    output = subprocess.run(['git', 'status', '-s'], cwd=BLOG_CACHE_PATH, capture_output=True, check=True)
-    return [line.strip() for line in output.stdout.decode('utf-8').splitlines()]
-
-
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
     posts = {}
@@ -228,12 +223,18 @@ def upload_files():
     return response
 
 
+def git_status():
+    output = subprocess.run(['git', 'status', '-s'], cwd=BLOG_CACHE_PATH, capture_output=True, check=True)
+    return [line.strip() for line in output.stdout.decode('utf-8').splitlines()]
+
+
 def git_add():
-    subprocess.run(['git', 'add', '-A'], cwd=BLOG_CACHE_PATH, capture_output=True, check=True)
+    subprocess.run(['git', 'add', '-A'], cwd=BLOG_CACHE_PATH, check=True)
 
 
 def git_commit():
-    subprocess.run(['git', 'commit', '-m', "online editor auto update"], cwd=BLOG_CACHE_PATH, capture_output=True, check=True)
+    subprocess.run(['git', 'commit', '-m', "online editor auto update"], cwd=BLOG_CACHE_PATH, check=True)
+    subprocess.run(['git', 'push'], cwd=BLOG_CACHE_PATH, check=True)
 
 
 def init_git():
