@@ -104,6 +104,7 @@ var vue = new Vue({
         await axios.post('/api/commit')
           .then(response => {
             this.is_show_changes=false
+            alert('提交成功')
           })
           .catch(function (error) {
             errorHandler(error)
@@ -151,6 +152,7 @@ var vue = new Vue({
              axios.post('/api/reset')
               .then(async response => {
                 await this.getPosts();
+                alert('重置成功')
               })
               .catch(function (error) {
                 errorHandler(error)
