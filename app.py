@@ -150,6 +150,7 @@ def create_post():
     template = template.replace('{{categories}}', '[]')
     with open(os.path.join(POSTS_PATH, post_dir_name, 'index.md'), mode='w', encoding='utf-8') as f:
         f.write(template)
+    git_add()
     return make_response(jsonify({'dirName': post_dir_name}))
 
 
