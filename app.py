@@ -22,8 +22,6 @@ BLOG_BRANCH = os.getenv('BLOG_BRANCH', 'master')
 CMD_AFTER_PUSH = os.getenv('CMD_AFTER_PUSH', 'bash /home/yyq/update_blog.sh')
 NEW_BLOG_TEMPLATE_PATH = os.getenv('NEW_BLOG_TEMPLATE_PATH', os.path.join(BLOG_CACHE_PATH, 'archetypes', 'posts.md'))
 
-# 静态文件索引
-STATIC_FILES = {}
 # 防止并发初始化工作空间
 IS_INIT_WORKSPACE = False
 # 防止命令注入
