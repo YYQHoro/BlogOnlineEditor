@@ -1,6 +1,7 @@
 import datetime
 import html.parser
 import os
+import re
 import shutil
 import subprocess
 import traceback
@@ -13,6 +14,7 @@ from flask import request
 
 app = Flask(__name__)
 
+app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
 BLOG_CACHE_PATH = os.getenv('BLOG_CACHE_PATH', 'blog_cache')
 BLOG_GIT_SSH = os.getenv('BLOG_GIT_SSH', 'git@gitee.com:RainbowYYQ/my-blog.git')
 POSTS_PATH = os.getenv('POSTS_PATH', os.path.join(BLOG_CACHE_PATH, 'content', 'posts'))
@@ -22,6 +24,13 @@ NEW_BLOG_TEMPLATE_PATH = os.getenv('NEW_BLOG_TEMPLATE_PATH', os.path.join(BLOG_C
 STATIC_FILES = {}
 
 IS_INIT_WORKSPACE = False
+
+RULE = re.compile(r'[a-zA-Z0-9]+')
+
+
+def check_name(dir_name):
+    if not RULE.match(dir_name):
+        raise Exception("invalid dir name")
 
 
 def delete_image_not_included(specific_post=None):
@@ -144,6 +153,7 @@ def create_post():
 
 @app.route('/api/post/<filename>', methods=['GET'])
 def get_post(filename):
+    check_name(filename)
     md_path = os.path.join(POSTS_PATH, filename, 'index.md')
     if os.path.isfile(md_path):
         return make_response(flask.send_file(md_path))
@@ -152,6 +162,7 @@ def get_post(filename):
 
 @app.route('/api/post/<filename>', methods=['DELETE'])
 def delete_post(filename):
+    check_name(filename)
     shutil.rmtree(os.path.join(POSTS_PATH, filename), ignore_errors=True)
     git_add()
     return flask.Response(status=200)
@@ -159,6 +170,7 @@ def delete_post(filename):
 
 @app.route('/api/post/<filename>', methods=['POST'])
 def save_post(filename):
+    check_name(filename)
     post = html.unescape(request.stream.read().decode('utf-8'))
     if not os.path.exists(os.path.join(POSTS_PATH, filename)):
         return flask.Response(status=404)
@@ -205,6 +217,7 @@ def upload_files():
             dir_name = request.form.get('belongDirName')
             if not dir_name:
                 raise Exception('belongDirName is empty')
+            check_name(dir_name)
             file.save(os.path.join(POSTS_PATH, dir_name, new_filename))
             success_files[file.filename] = f'{new_filename}'
         except Exception:
