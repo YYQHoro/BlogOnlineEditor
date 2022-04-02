@@ -19,7 +19,7 @@ BLOG_CACHE_PATH = os.getenv('BLOG_CACHE_PATH', 'blog_cache')
 BLOG_GIT_SSH = os.getenv('BLOG_GIT_SSH', 'git@gitee.com:RainbowYYQ/my-blog.git')
 POSTS_PATH = os.getenv('POSTS_PATH', os.path.join(BLOG_CACHE_PATH, 'content', 'posts'))
 BLOG_BRANCH = os.getenv('BLOG_BRANCH', 'master')
-CMD_AFTER_PUSH = os.getenv('CMD_AFTER_PUSH', '/home/yyq/update_blog.sh')
+CMD_AFTER_PUSH = os.getenv('CMD_AFTER_PUSH', 'bash /home/yyq/update_blog.sh')
 NEW_BLOG_TEMPLATE_PATH = os.getenv('NEW_BLOG_TEMPLATE_PATH', os.path.join(BLOG_CACHE_PATH, 'archetypes', 'posts.md'))
 
 # 静态文件索引
