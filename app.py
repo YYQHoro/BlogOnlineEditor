@@ -260,4 +260,4 @@ def check_initializing():
 if __name__ == '__main__':
     if not os.path.exists(BLOG_CACHE_PATH):
         init_git()
-    app.run()
+    app.run(host='127.0.0.1', port=5000)
