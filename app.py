@@ -193,6 +193,12 @@ def commit():
     return flask.Response(status=200)
 
 
+@app.route('/api/redeploy', methods=['POST'])
+def redeploy():
+    deploy()
+    return flask.Response(status=200)
+
+
 @app.route('/upload', methods=['POST', 'OPTIONS'])
 def upload_files():
     success_files = {}
@@ -235,6 +241,10 @@ def git_add():
 def git_commit():
     subprocess.run(['git', 'commit', '-m', "online editor auto update"], cwd=BLOG_CACHE_PATH, check=True)
     subprocess.run(['git', 'push'], cwd=BLOG_CACHE_PATH, check=True)
+    deploy()
+
+
+def deploy():
     subprocess.run(CMD_AFTER_PUSH.split(' '), check=True)
 
 

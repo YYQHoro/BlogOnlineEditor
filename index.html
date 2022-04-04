@@ -42,6 +42,7 @@
         <div class="col-md-12">
             <button type="button" class="btn btn-default" @click="newPost">新博文</button>
             <button type="button" class="btn btn-default" @click="showChanges">提交</button>
+            <button type="button" class="btn btn-default" @click="redeploy">重新部署</button>
             <button type="button" class="btn btn-danger pull-right" @click="reset">重置编辑空间</button>
 
         </div>
@@ -104,6 +105,15 @@ var vue = new Vue({
           .then(response => {
             this.is_show_changes=false
             alert('提交成功')
+          })
+          .catch(function (error) {
+            errorHandler(error)
+          });
+    },
+    redeploy() {
+        axios.post('/api/redeploy')
+          .then(response => {
+            alert('重新部署成功')
           })
           .catch(function (error) {
             errorHandler(error)
