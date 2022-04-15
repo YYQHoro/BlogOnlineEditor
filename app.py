@@ -13,9 +13,9 @@ from flask import Flask, make_response, jsonify
 from flask import request
 
 app = Flask(__name__)
-
+PROG_PATH = os.path.dirname(__file__)
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', str(20 * 1024 * 1024)))
-BLOG_CACHE_PATH = os.getenv('BLOG_CACHE_PATH', 'blog_cache')
+BLOG_CACHE_PATH = os.getenv('BLOG_CACHE_PATH', os.path.join(PROG_PATH,'blog_cache'))
 BLOG_GIT_SSH = os.getenv('BLOG_GIT_SSH', 'git@gitee.com:RainbowYYQ/my-blog.git')
 POSTS_PATH = os.getenv('POSTS_PATH', os.path.join(BLOG_CACHE_PATH, 'content', 'posts'))
 BLOG_BRANCH = os.getenv('BLOG_BRANCH', 'master')
