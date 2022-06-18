@@ -15,7 +15,7 @@ from flask import request
 app = Flask(__name__)
 PROG_PATH = os.path.dirname(__file__)
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', str(20 * 1024 * 1024)))
-BLOG_CACHE_PATH = os.getenv('BLOG_CACHE_PATH', os.path.join(PROG_PATH,'blog_cache'))
+BLOG_CACHE_PATH = os.getenv('BLOG_CACHE_PATH', os.path.join(PROG_PATH, 'blog_cache'))
 BLOG_GIT_SSH = os.getenv('BLOG_GIT_SSH', 'git@gitee.com:RainbowYYQ/my-blog.git')
 POSTS_PATH = os.getenv('POSTS_PATH', os.path.join(BLOG_CACHE_PATH, 'content', 'posts'))
 BLOG_BRANCH = os.getenv('BLOG_BRANCH', 'master')
@@ -187,6 +187,13 @@ def reset():
     return flask.Response(status=200)
 
 
+@app.route('/api/soft_reset', methods=['POST'])
+def soft_reset():
+    check_initializing()
+    pull_updates()
+    return flask.Response(status=200)
+
+
 @app.route('/api/commit', methods=['POST'])
 def commit():
     git_commit()
@@ -246,6 +253,20 @@ def git_commit():
 
 def deploy():
     subprocess.run(CMD_AFTER_PUSH.split(' '), check=True)
+
+
+def pull_updates():
+    global IS_INIT_WORKSPACE
+    if IS_INIT_WORKSPACE:
+        return
+    IS_INIT_WORKSPACE = True
+    try:
+        git_add()
+        subprocess.run(['git', 'stash'], check=True, cwd=BLOG_CACHE_PATH)
+        subprocess.run(['git', 'pull'], check=True, cwd=BLOG_CACHE_PATH)
+        subprocess.run(['git', 'stash', 'pop'], check=True, cwd=BLOG_CACHE_PATH)
+    finally:
+        IS_INIT_WORKSPACE = False
 
 
 def init_git():

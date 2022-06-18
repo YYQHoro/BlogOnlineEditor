@@ -44,7 +44,8 @@
             <button type="button" class="btn btn-default" @click="showChanges">提交</button>
             <button type="button" class="btn btn-default" @click="redeploy">重新部署</button>
             <a type="button" class="btn btn-default" href="https://hiyyq.cn" target='_BLANK'>博客首页</a>
-            <a type="button" class="btn btn-default" href="https://hugoloveit.com/zh-cn/theme-documentation-extended-shortcodes/" target='_BLANK'>Shortcodes参考</a>            
+            <a type="button" class="btn btn-default" href="https://hugoloveit.com/zh-cn/theme-documentation-extended-shortcodes/" target='_BLANK'>Shortcodes参考</a>
+            <button type="button" class="btn btn-default" @click="soft_reset">更新编辑空间</button>
             <button type="button" class="btn btn-danger pull-right" @click="reset">重置编辑空间</button>
 
         </div>
@@ -164,6 +165,18 @@ var vue = new Vue({
               .then(async response => {
                 await this.getPosts();
                 alert('重置成功')
+              })
+              .catch(function (error) {
+                errorHandler(error)
+              });
+        }
+    },
+    soft_reset() {
+		if (confirm("是否确定执行更新操作？") == true) {
+             axios.post('/api/soft_reset')
+              .then(async response => {
+                await this.getPosts();
+                alert('更新成功')
               })
               .catch(function (error) {
                 errorHandler(error)
