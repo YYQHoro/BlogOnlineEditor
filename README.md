@@ -1,5 +1,6 @@
 # BlogOnlineEditor
 一款极其轻量化的面向Hugo博客的在线编辑器
+[原始开发诉求](https://hiyyq.cn/posts/20220403011131)
 
 ## 功能列表
 - 支持在线创建，修改，删除博客文章
@@ -14,6 +15,10 @@
 - 系统没有登录认证校验
 
 ## 快速使用
+```shell
+pip3 install flask,pyyaml
+```
+
 ```shell
 export BLOG_GIT_SSH = "Hugo博客站点的代码仓，需要提前配置git ssh免密"
 export CMD_AFTER_PUSH = "在进行git push后自动执行的脚本路径，通常用于串联自动部署流程"
@@ -34,3 +39,5 @@ python3 app.py
 - Bootstrap
 - Flask
 - Axios
+
+本项目源码极其简单，可以随意修改源码进行二次开发直至满足你的诉求，也欢迎提PR。

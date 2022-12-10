@@ -20,6 +20,7 @@ BLOG_GIT_SSH = os.getenv('BLOG_GIT_SSH', 'git@gitee.com:RainbowYYQ/my-blog.git')
 POSTS_PATH = os.getenv('POSTS_PATH', os.path.join(BLOG_CACHE_PATH, 'content', 'posts'))
 BLOG_BRANCH = os.getenv('BLOG_BRANCH', 'master')
 CMD_AFTER_PUSH = os.getenv('CMD_AFTER_PUSH', 'bash /home/yyq/update_blog.sh')
+# 新建一篇文章时使用此markdown文件作为模板
 NEW_BLOG_TEMPLATE_PATH = os.getenv('NEW_BLOG_TEMPLATE_PATH', os.path.join(BLOG_CACHE_PATH, 'archetypes', 'posts.md'))
 
 # 防止并发初始化工作空间
@@ -119,7 +120,7 @@ def get_posts():
 
 
 def read_post_template():
-    with open(os.path.join(BLOG_CACHE_PATH, 'archetypes', 'posts.md'), mode='r', encoding='utf-8') as f:
+    with open(NEW_BLOG_TEMPLATE_PATH, mode='r', encoding='utf-8') as f:
         return f.read()
 
 
