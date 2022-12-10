@@ -63,6 +63,16 @@ def get_file(dir_name, file_name):
     return make_response(flask.send_from_directory(os.path.join(POSTS_PATH, dir_name), file_name))
 
 
+@app.route('/api/categories', methods=['GET'])
+def get_categories():
+    categories = set()
+    for i in os.listdir(POSTS_PATH):
+        post_yaml = get_md_yaml(os.path.join(POSTS_PATH, i, 'index.md'))
+        for item in post_yaml.get('categories', []):
+            categories.add(item)
+    return make_response(jsonify(list(categories)))
+
+
 def get_md_yaml(file_path):
     yaml_lines = []
     if not os.path.isfile(file_path):
