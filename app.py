@@ -275,7 +275,7 @@ def pull_updates():
         git_add()
         subprocess.run(['git', 'stash'], check=True, cwd=BLOG_CACHE_PATH)
         subprocess.run(['git', 'pull'], check=True, cwd=BLOG_CACHE_PATH)
-        subprocess.run(['git', 'stash', 'pop'], check=True, cwd=BLOG_CACHE_PATH)
+        subprocess.run(['git', 'stash', 'pop'], check=False, cwd=BLOG_CACHE_PATH)
     finally:
         IS_INIT_WORKSPACE = False
 
