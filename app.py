@@ -257,7 +257,15 @@ def git_add():
 
 
 def git_commit():
-    subprocess.run(['git', 'commit', '-m', "online editor auto update"], cwd=BLOG_CACHE_PATH, check=True)
+    commit_cmd = ['git', 'commit']
+    commit_msg = []
+    for line in pretty_git_status(git_status()):
+        commit_msg.append('-m')
+        commit_msg.append(line)
+    if not commit_msg:
+        commit_msg = ['-m', "online editor auto update"]
+    commit_cmd.extend(commit_msg)
+    subprocess.run(commit_cmd, cwd=BLOG_CACHE_PATH, check=True)
     subprocess.run(['git', 'push'], cwd=BLOG_CACHE_PATH, check=True)
     deploy()
 
