@@ -1,0 +1,15 @@
+[Unit]
+Description=BlogOnlineEditorService
+After=network.target
+
+[Service]
+ExecStart=/home/yyq/BlogOnlineEditor/start.sh
+Type=forking
+Restart=on-failure
+RestartSec=3s
+PIDFile=/home/yyq/BlogOnlineEditor/pid
+User=yyq
+
+[Install]
+WantedBy=multi-user.target
+
