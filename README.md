@@ -1,3 +1,5 @@
+
+
 # BlogOnlineEditor
 一款极其轻量化的面向Hugo博客的在线编辑器
 [原始开发诉求](https://hiyyq.cn/posts/20220403011131)
@@ -20,8 +22,8 @@ pip3 install flask,pyyaml
 ```
 
 ```shell
-export BLOG_GIT_SSH = "Hugo博客站点的代码仓，需要提前配置git ssh免密"
-export CMD_AFTER_PUSH = "在进行git push后自动执行的脚本路径，通常用于串联自动部署流程"
+export BLOG_GIT_SSH="Hugo博客站点的代码仓，需要提前配置git ssh免密"
+export CMD_AFTER_PUSH="在进行git push后自动执行的脚本路径，通常用于串联自动部署流程"
 python3 app.py
 ```
 
